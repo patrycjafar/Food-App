@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Food app</string>
+    <string name="wybierz_skladnik">Wybierz składnik:</string>
+    <string name="nazwa_dania">Nazwa Dania</string>
+    <string name="polubione_dania">Polubione Dania</string>
+    <string name="strona_glowna">Strona Główna</string>
+    <string name="polubione">Polubione</string>
+</resources>
