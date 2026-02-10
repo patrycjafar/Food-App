@@ -1,11 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/nav_home"
-        android:title="@string/strona_glowna"
-        android:icon="@android:drawable/ic_menu_search" />
+    android:id="@+id/nav_home"
+    android:title="Strona Główna"
+    android:icon="@android:drawable/ic_menu_search"/>
     <item
         android:id="@+id/nav_liked"
-        android:title="@string/polubione"
-        android:icon="@android:drawable/btn_star" />
+        android:title="Polubione"
+        android:icon="@android:drawable/btn_star"/>
+
+    <group android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_dark_mode"
+            android:title="Tryb ciemny"
+            app:actionViewClass="androidx.appcompat.widget.SwitchCompat"
+            app:showAsAction="always"/>
+    </group>
 </menu>
