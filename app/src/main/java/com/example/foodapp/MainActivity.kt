@@ -31,7 +31,7 @@ data class Meal(
     val strMealThumb: String
 )
 
-// --- 2. INTERFEJS API ---
+// --- 2. POŁĄCZENIE API ---
 interface TheMealDbApi {
     @GET("filter.php")
     fun getMealsByIngredient(@Query("i") ingredient: String): Call<MealResponse>
