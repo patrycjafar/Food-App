@@ -20,6 +20,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import androidx.appcompat.app.AppCompatDelegate
+import com.google.android.material.materialswitch.MaterialSwitch
 
 // --- 1. MODELE DANYCH (API) ---
 data class MealResponse(val meals: List<Meal>?)
@@ -77,10 +79,18 @@ class MainActivity : AppCompatActivity() {
     private val ingredients = listOf("Chicken", "Beef", "Pork", "Potato", "Cheese", "Salmon") // API obsługuje angielskie nazwy
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Sprawdzanie czy jest zapisany czarny motyw
+        val isDarkSaved = loadThemePreference()
+        if (isDarkSaved) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+        }
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inicjalizacja widoków
+        // 3. Wszystkie findViewById
         drawerLayout = findViewById(R.id.drawerLayout)
         layoutHome = findViewById(R.id.layoutHome)
         layoutLiked = findViewById(R.id.layoutLiked)
@@ -93,6 +103,20 @@ class MainActivity : AppCompatActivity() {
         val btnMenu: View = findViewById(R.id.btnMenu)
         val navView: NavigationView = findViewById(R.id.navigationView)
         val recyclerLiked: RecyclerView = findViewById(R.id.recyclerViewLiked)
+
+        // 4. Logika przełącznika
+        val darkModeItem = navView.menu.findItem(R.id.nav_dark_mode)
+        val themeSwitch = darkModeItem.actionView as androidx.appcompat.widget.SwitchCompat
+        themeSwitch.isChecked = isDarkSaved
+
+        themeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            saveThemePreference(isChecked)
+            if (isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            }
+        }
 
         // Konfiguracja API
         val retrofit = Retrofit.Builder()
@@ -186,5 +210,19 @@ class MainActivity : AppCompatActivity() {
             tvDishName.text = "To już wszystko w tej kategorii!"
             ivDishImage.setImageResource(android.R.drawable.ic_menu_info_details)
         }
+    }
+
+    private fun saveThemePreference(isDarkMode: Boolean) {
+        val sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE)
+        with(sharedPreferences.edit()) {
+            putBoolean("dark_mode", isDarkMode)
+            apply()
+        }
+    }
+
+    private fun loadThemePreference(): Boolean {
+        val sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE)
+        // Domyślnie ustawiamy false (jasny), jeśli nic nie zapisano
+        return sharedPreferences.getBoolean("dark_mode", false)
     }
 }
