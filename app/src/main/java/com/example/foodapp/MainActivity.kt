@@ -22,7 +22,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// --- 1. MODELE DANYCH ---
+//MODELE DANYCH
 data class MealResponse(val meals: List<Meal>?)
 data class Meal(
     val idMeal: String,
@@ -30,13 +30,13 @@ data class Meal(
     val strMealThumb: String
 )
 
-// --- 2. POŁĄCZENIE API ---
+//POŁĄCZENIE API
 interface TheMealDbApi {
     @GET("filter.php")
     fun getMealsByIngredient(@Query("i") ingredient: String): Call<MealResponse>
 }
 
-// --- 3. ADAPTER DO LISTY POLUBIONYCH ---
+//ADAPTER DO LISTY POLUBIONYCH
 class LikedMealsAdapter(private val meals: List<Meal>) :
     RecyclerView.Adapter<LikedMealsAdapter.ViewHolder>() {
 
@@ -59,10 +59,10 @@ class LikedMealsAdapter(private val meals: List<Meal>) :
     override fun getItemCount() = meals.size
 }
 
-// --- 4. GŁÓWNA AKTYWNOŚĆ ---
+//GŁÓWNA AKTYWNOŚĆ
 class MainActivity : AppCompatActivity() {
 
-    // UI Elements
+    //Elementy UI
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var layoutHome: LinearLayout
     private lateinit var layoutLiked: LinearLayout
@@ -71,12 +71,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spinner: Spinner
     private lateinit var adapterLiked: LikedMealsAdapter
 
-    // Logic Variables
+    //Zmienne logiczne
     private lateinit var viewModel: MainViewModel
     private val ingredients = listOf("Chicken", "Beef", "Pork", "Potato", "Cheese", "Salmon")
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Sprawdzanie czy jest zapisany czarny motyw
         val isDarkSaved = loadThemePreference()
         if (isDarkSaved) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -88,7 +87,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        // Wszystkie findViewById
+        //Wszystkie findViewById
         drawerLayout = findViewById(R.id.drawerLayout)
         layoutHome = findViewById(R.id.layoutHome)
         layoutLiked = findViewById(R.id.layoutLiked)
@@ -102,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = findViewById(R.id.navigationView)
         val recyclerLiked: RecyclerView = findViewById(R.id.recyclerViewLiked)
 
-        // Logika przełącznika
+        //Logika przełącznika
         val darkModeItem = navView.menu.findItem(R.id.nav_dark_mode)
         val themeSwitch = darkModeItem.actionView as androidx.appcompat.widget.SwitchCompat
         themeSwitch.isChecked = isDarkSaved
@@ -116,18 +115,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Konfiguracja API
+        //Konfiguracja API
         val retrofit = Retrofit.Builder()
             .baseUrl("https://www.themealdb.com/api/json/v1/1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val api = retrofit.create(TheMealDbApi::class.java)
 
-        // Konfiguracja Spinnera (Wybór składnika)
+        //Konfiguracja Spinnera (Wybór składnika)
         val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ingredients)
         spinner.adapter = spinnerAdapter
 
-        // MIEJSCE NAPRAWY 1: Poprawna implementacja OnItemSelectedListener
+
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedIngredient = ingredients[position]
@@ -144,13 +143,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // MIEJSCE NAPRAWY 2: Kod wyciągnięty POZA spinner
-        // Konfiguracja Listy Polubionych
+        //Konfiguracja Listy Polubionych
         adapterLiked = LikedMealsAdapter(viewModel.likedMeals)
         recyclerLiked.layoutManager = LinearLayoutManager(this)
         recyclerLiked.adapter = adapterLiked
 
-        // Obsługa Menu Bocznego (Drawer)
+        //Obsługa Menu Bocznego (Drawer)
         btnMenu.setOnClickListener { drawerLayout.openDrawer(GravityCompat.START) }
 
         navView.setNavigationItemSelectedListener { menuItem ->
@@ -171,7 +169,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // Logika Przycisków (Tinder)
+        //Logika Przycisków (Tinder)
         btnReject.setOnClickListener {
             loadNextDish()
         }
@@ -184,7 +182,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Przywracanie stanu po obrocie / zmianie motywu
+        //Przywracanie stanu po zmianie motywu
         if (viewModel.isHomeVisible) {
             layoutHome.visibility = View.VISIBLE
             layoutLiked.visibility = View.GONE
@@ -192,9 +190,7 @@ class MainActivity : AppCompatActivity() {
             layoutHome.visibility = View.GONE
             layoutLiked.visibility = View.VISIBLE
         }
-    } // <-- MIEJSCE NAPRAWY 3: Tutaj zamykamy funkcję onCreate()
-
-    // MIEJSCE NAPRAWY 4: Funkcje pomocnicze wrzucone do klasy MainActivity, POZA onCreate()
+    }
 
     private fun fetchMeals(api: TheMealDbApi, ingredient: String) {
         viewModel.currentIndex = 0
