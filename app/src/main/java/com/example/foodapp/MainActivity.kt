@@ -6,12 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.foodapp.R
 import com.google.android.material.navigation.NavigationView
 import retrofit2.Call
 import retrofit2.Callback
@@ -20,10 +21,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import androidx.appcompat.app.AppCompatDelegate
-import com.google.android.material.materialswitch.MaterialSwitch
 
-// --- 1. MODELE DANYCH (API) ---
+// --- 1. MODELE DANYCH ---
 data class MealResponse(val meals: List<Meal>?)
 data class Meal(
     val idMeal: String,
@@ -73,10 +72,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapterLiked: LikedMealsAdapter
 
     // Logic Variables
-    private var currentMeals: List<Meal> = emptyList()
-    private var currentIndex = 0
-    private val likedMeals = mutableListOf<Meal>()
-    private val ingredients = listOf("Chicken", "Beef", "Pork", "Potato", "Cheese", "Salmon") // API obsługuje angielskie nazwy
+    private lateinit var viewModel: MainViewModel
+    private val ingredients = listOf("Chicken", "Beef", "Pork", "Potato", "Cheese", "Salmon")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Sprawdzanie czy jest zapisany czarny motyw
@@ -89,8 +86,9 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-        // 3. Wszystkie findViewById
+        // Wszystkie findViewById
         drawerLayout = findViewById(R.id.drawerLayout)
         layoutHome = findViewById(R.id.layoutHome)
         layoutLiked = findViewById(R.id.layoutLiked)
@@ -104,7 +102,7 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = findViewById(R.id.navigationView)
         val recyclerLiked: RecyclerView = findViewById(R.id.recyclerViewLiked)
 
-        // 4. Logika przełącznika
+        // Logika przełącznika
         val darkModeItem = navView.menu.findItem(R.id.nav_dark_mode)
         val themeSwitch = darkModeItem.actionView as androidx.appcompat.widget.SwitchCompat
         themeSwitch.isChecked = isDarkSaved
@@ -128,16 +126,27 @@ class MainActivity : AppCompatActivity() {
         // Konfiguracja Spinnera (Wybór składnika)
         val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ingredients)
         spinner.adapter = spinnerAdapter
+
+        // MIEJSCE NAPRAWY 1: Poprawna implementacja OnItemSelectedListener
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedIngredient = ingredients[position]
-                fetchMeals(api, selectedIngredient)
+
+                if (viewModel.lastSelectedIngredient != selectedIngredient || viewModel.currentMeals.isEmpty()) {
+                    viewModel.lastSelectedIngredient = selectedIngredient
+                    fetchMeals(api, selectedIngredient)
+                } else {
+                    loadDishUI()
+                }
             }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
         }
 
+        // MIEJSCE NAPRAWY 2: Kod wyciągnięty POZA spinner
         // Konfiguracja Listy Polubionych
-        adapterLiked = LikedMealsAdapter(likedMeals)
+        adapterLiked = LikedMealsAdapter(viewModel.likedMeals)
         recyclerLiked.layoutManager = LinearLayoutManager(this)
         recyclerLiked.adapter = adapterLiked
 
@@ -149,11 +158,13 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_home -> {
                     layoutHome.visibility = View.VISIBLE
                     layoutLiked.visibility = View.GONE
+                    viewModel.isHomeVisible = true
                 }
                 R.id.nav_liked -> {
                     layoutHome.visibility = View.GONE
                     layoutLiked.visibility = View.VISIBLE
-                    adapterLiked.notifyDataSetChanged() // Odśwież listę
+                    viewModel.isHomeVisible = false
+                    adapterLiked.notifyDataSetChanged()
                 }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -166,24 +177,34 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnLike.setOnClickListener {
-            if (currentIndex < currentMeals.size) {
-                likedMeals.add(currentMeals[currentIndex])
+            if (viewModel.currentIndex < viewModel.currentMeals.size) {
+                viewModel.likedMeals.add(viewModel.currentMeals[viewModel.currentIndex])
                 Toast.makeText(this, "Polubiono!", Toast.LENGTH_SHORT).show()
                 loadNextDish()
             }
         }
-    }
+
+        // Przywracanie stanu po obrocie / zmianie motywu
+        if (viewModel.isHomeVisible) {
+            layoutHome.visibility = View.VISIBLE
+            layoutLiked.visibility = View.GONE
+        } else {
+            layoutHome.visibility = View.GONE
+            layoutLiked.visibility = View.VISIBLE
+        }
+    } // <-- MIEJSCE NAPRAWY 3: Tutaj zamykamy funkcję onCreate()
+
+    // MIEJSCE NAPRAWY 4: Funkcje pomocnicze wrzucone do klasy MainActivity, POZA onCreate()
 
     private fun fetchMeals(api: TheMealDbApi, ingredient: String) {
-        // Resetujemy stan
-        currentIndex = 0
+        viewModel.currentIndex = 0
         tvDishName.text = "Ładowanie..."
         ivDishImage.setImageResource(android.R.drawable.ic_menu_gallery)
 
         api.getMealsByIngredient(ingredient).enqueue(object : Callback<MealResponse> {
             override fun onResponse(call: Call<MealResponse>, response: Response<MealResponse>) {
                 if (response.isSuccessful && response.body()?.meals != null) {
-                    currentMeals = response.body()!!.meals!!
+                    viewModel.currentMeals = response.body()!!.meals!!
                     loadDishUI()
                 } else {
                     tvDishName.text = "Brak dań z tym składnikiem"
@@ -197,13 +218,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadNextDish() {
-        currentIndex++
+        viewModel.currentIndex++
         loadDishUI()
     }
 
     private fun loadDishUI() {
-        if (currentIndex < currentMeals.size) {
-            val meal = currentMeals[currentIndex]
+        if (viewModel.currentIndex < viewModel.currentMeals.size) {
+            val meal = viewModel.currentMeals[viewModel.currentIndex]
             tvDishName.text = meal.strMeal
             Glide.with(this).load(meal.strMealThumb).into(ivDishImage)
         } else {
@@ -222,7 +243,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadThemePreference(): Boolean {
         val sharedPreferences = getSharedPreferences("Settings", MODE_PRIVATE)
-        // Domyślnie ustawiamy false (jasny), jeśli nic nie zapisano
         return sharedPreferences.getBoolean("dark_mode", false)
     }
 }

@@ -17,7 +17,8 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:src="@drawable/ic_menu"
+            app:tint="?attr/colorOnSurface"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -64,7 +65,7 @@
                         android:layout_height="0dp"
                         android:layout_weight="3"
                         android:scaleType="centerCrop"
-                        android:src="@android:drawable/ic_menu_gallery" />
+                        android:src="@drawable/ic_img" />
 
                     <TextView
                         android:id="@+id/tvDishName"
@@ -90,17 +91,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="50dp"
-                    android:src="@android:drawable/ic_delete"
+                    android:src="@drawable/ic_no"
                     app:backgroundTint="#F44336"
-                    app:tint="@android:color/white" />
+                    app:tint="@android:color/white"
+                    app:elevation="0dp"
+                    app:pressedTranslationZ="0dp"/>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/btnLike"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@android:drawable/checkbox_on_background"
+                    android:src="@drawable/ic_yes"
                     app:backgroundTint="#4CAF50"
-                    app:tint="@android:color/white" />
+                    app:tint="@android:color/white"
+                    app:elevation="0dp"
+                    app:pressedTranslationZ="0dp"/>
             </LinearLayout>
 
         </LinearLayout>
